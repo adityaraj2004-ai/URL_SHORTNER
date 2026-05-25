@@ -8,6 +8,7 @@ import { nanoid } from "nanoid"
 export const shortenUrl = asyncHandler(async (req, res) => {
 
     const { originalUrl } = req.body;
+
     if (!originalUrl) {
         throw new ApiError(401, "Url is required")
     }
@@ -42,4 +43,15 @@ export const redirectUrl = asyncHandler(async (req, res) => {
         throw new ApiError(410, "Url Expired")
     }
 
+    url.click += 1;
+
+    url.visitHistory.push({
+        ipAddress: req.ip,
+        userAgent: req.get("User-Agent"),
+        referrer: req.get("Referrer") || "Direct"
+    })
+
+    await url.save();
+
+    return res.redirectUrl(url.originalUrl);
 })
