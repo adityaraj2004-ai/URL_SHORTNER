@@ -4,6 +4,8 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet"
+import morgan from "morgan"
 
 const app = express();
 
@@ -19,8 +21,10 @@ app.use(express.static("public"))
 
 
 app.use(cookieParser())
-
-
+app.use(morgan("dev"))
+app.use(helmet(
+    { crossOriginResourcePolicy: false }
+))
 
 
 app.get("/", (req, res) => {

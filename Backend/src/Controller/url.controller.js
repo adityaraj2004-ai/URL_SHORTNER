@@ -10,8 +10,9 @@ export const shortenUrl = asyncHandler(async (req, res) => {
 
     const { originalUrl } = req.body;
 
-    if (!originalUrl) {
-        throw new ApiError(401, "Url is required")
+
+    if (!originalUrl || !validator.isURL(originalUrl)) {
+        throw new ApiError(401, "Invalid Url")
     }
 
     const shortId = nanoid(7)
@@ -124,8 +125,20 @@ export const updateUrl = asyncHandler(async (req, res) => {
     )
 })
 
+// PATCH /api/v1/url/deactivate/:shortId
 export const deactivateUrl = asyncHandler(async (req, res) => {
     const { shortId } = req.params;
+    if (!shortId) {
+        throw new ApiError(400, "Missing params")
+    }
+    const url = await Url.findOne({
+        shortId
+    })
+    if (url.isActive === false) {
+        throw new ApiError(400, "Url is already deactivated")
+    }
+
+
     const deactivatedUrl = await Url.findOneAndUpdate({
         shortId
     }, {
@@ -144,3 +157,35 @@ export const deactivateUrl = asyncHandler(async (req, res) => {
 
 })
 
+// PATCH /api/v1/url/activate/:shortId
+export const activateUrl = asyncHandler(async (req, res) => {
+    const { shortId } = req.params;
+    if (!shortId) {
+        throw new ApiError(400, "Missing params")
+    }
+    const url = await Url.findOne({ shortId })
+    if (url.isActive === true) {
+        throw new ApiError(400, "Url is already activated")
+    }
+    const activatedUrl = await Url.findOneAndUpdate({ shortId }, {
+        isActive: true,
+    }, {
+        new: true
+    })
+
+    if (!activatedUrl) {
+        throw new ApiError(404, "Url not found")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, activatedUrl, "Url Activated")
+    )
+})
+
+
+// GET /api/v1/url/all
+export const getAllUrls = asyncHandler(async (req, res) => {
+
+
+    const url = await Url.find().
+})
