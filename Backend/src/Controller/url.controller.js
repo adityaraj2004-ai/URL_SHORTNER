@@ -3,7 +3,7 @@ import ApiError from "../Utils/ApiError.js";
 import ApiResponse from "../Utils/ApiResponse.js"
 import { asyncHandler } from "../Utils/asyncHandler.js";
 import { nanoid } from "nanoid"
-
+import validator from "validator"
 
 // POST /api/v1/url/shorten
 export const shortenUrl = asyncHandler(async (req, res) => {
@@ -59,9 +59,9 @@ export const redirectUrl = asyncHandler(async (req, res) => {
 
 
 export const getUrlDetails = asyncHandler(async (req, res) => {
-    const urlId = req.params;
+    const { shortId } = req.params;
     const url = await Url.findOne({
-        urlId
+        shortId
     })
     if (!url) {
         throw new ApiError(404, "No Url Found")
@@ -73,7 +73,7 @@ export const getUrlDetails = asyncHandler(async (req, res) => {
 
 // GET /api/v1/url/analytics/:shortId
 export const getUrlAnalytics = asyncHandler(async (req, res) => {
-    const urlId = req.params;
+    const { shortId } = req.params;
     const url = await Url.findOne({
         urlId
     })
@@ -88,3 +88,59 @@ export const getUrlAnalytics = asyncHandler(async (req, res) => {
 })
 
 // DELETE /api/v1/url/:shortId
+export const deleteUrl = asyncHandler(async (req, res) => {
+    const { shortId } = req.params
+    const deletedUrl = await Url.findOneAndDelete({
+        shortId
+    })
+    if (!deleteUrl) {
+        throw new ApiError(404, "Url not found")
+    }
+    return res.status(200).json(new ApiResponse(200, {}, "Url Deleted"))
+})
+
+// PATCH /api/v1/url/update/:shortId
+
+export const updateUrl = asyncHandler(async (req, res) => {
+    const { newUrl } = req.body;
+    if (!newUrl || !validator.isURL(newUrl)) {
+        throw new ApiError(401, "Invalid Url")
+    }
+    const { shortId } = req.params;
+    const updatedUrl = await Url.findOneAndUpdate({
+        shortId
+    }, {
+        originalUrl: newUrl
+    }, {
+        new: true
+    })
+
+    if (!updatedUrl) {
+        throw new ApiError(404, "Url not found")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedUrl, "Url Updated")
+    )
+})
+
+export const deactivateUrl = asyncHandler(async (req, res) => {
+    const { shortId } = req.params;
+    const deactivatedUrl = await Url.findOneAndUpdate({
+        shortId
+    }, {
+        isActive: false
+    }, {
+        new: true
+    })
+
+    if (!deactivatedUrl) {
+        throw new ApiError(404, "Url not Found")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, deactivatedUrl, "Url Deactivated")
+    )
+
+})
+
