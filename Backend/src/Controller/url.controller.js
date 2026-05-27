@@ -71,7 +71,6 @@ export const getUrlDetails = asyncHandler(async (req, res) => {
 
 })
 
-
 // GET /api/v1/url/analytics/:shortId
 export const getUrlAnalytics = asyncHandler(async (req, res) => {
     const { shortId } = req.params;
@@ -186,6 +185,46 @@ export const activateUrl = asyncHandler(async (req, res) => {
 // GET /api/v1/url/all
 export const getAllUrls = asyncHandler(async (req, res) => {
 
+    const page = Math.max(1, parseInt(req.query.page) || 1);
 
-    const url = await Url.find().
-})
+    const limit = Math.min(50, parseInt(req.query.limit) || 10);
+
+    const skip = (page - 1) * limit;
+
+    const [urls, totalUrls] = await Promise.all([
+
+        Url.find()
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+
+        Url.countDocuments()
+    ]);
+
+    const totalPages = Math.ceil(totalUrls / limit);
+
+    const hasNextPage = page < totalPages;
+
+    const hasPrevPage = page > 1;
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            {
+                urls,
+
+                pagination: {
+                    totalUrls,
+                    totalPages,
+                    currentPage: page,
+                    limit,
+                    hasNextPage,
+                    hasPrevPage
+                }
+            },
+
+            "All URLs fetched"
+        )
+    );
+});
