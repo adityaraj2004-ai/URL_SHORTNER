@@ -13,7 +13,7 @@ export const shortenUrl = asyncHandler(async (req, res) => {
 
     if (!originalUrl || !validator.isURL(originalUrl)) {
         throw new ApiError(401, "Invalid Url")
-    }
+    }       
 
     const shortId = nanoid(7)
 
@@ -24,6 +24,9 @@ export const shortenUrl = asyncHandler(async (req, res) => {
         shortId,
         shortUrl,
     })
+    return res.status(201).json(
+        new ApiResponse(201, newUrl, "URL Shortened")
+    )   
 
 })
 
@@ -31,7 +34,7 @@ export const shortenUrl = asyncHandler(async (req, res) => {
 
 export const redirectUrl = asyncHandler(async (req, res) => {
     const { shortId } = req.params;
-    const url = await Url.findById({ shortId })
+    const url = await Url.findOne({ shortId })
 
     if (!url) {
         throw new ApiError(404, "Url not found ");
@@ -75,7 +78,7 @@ export const getUrlDetails = asyncHandler(async (req, res) => {
 export const getUrlAnalytics = asyncHandler(async (req, res) => {
     const { shortId } = req.params;
     const url = await Url.findOne({
-        urlId
+        shortId
     })
     return res.status(200).json(new ApiError(200,
         {
